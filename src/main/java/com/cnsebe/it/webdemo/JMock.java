@@ -2,12 +2,12 @@ package com.cnsebe.it.webdemo;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Created by wind on 16/8/9.
+ * Created by wind on 16/8/19.
+ * 模拟工具类
  */
 public class JMock {
 
@@ -25,31 +25,37 @@ public class JMock {
         System.out.println(s);
     }
 
-    ////生成salt值,并存储到内存中
+    //生成salt值,并存储到内存中
     public static String gen_salt( String user ){
         String salt = UUID.randomUUID().toString();
         user_salt.put(user,salt);
-
         pl( "GEN: user=" + user + ",salt=" + salt );
 
         return salt;
     }
 
-    //校验方法 p= sha256(  md5(password) + salt ) , m= sha256(  md5(mac) + salt )
-    public static String validate_pum(String user, String password_encrypt, String mac_encrypt){
+    //校验方法 p= sha256(  md5(password) + salt ) , m= sha256(  md5(特征码) + salt )
+    public static String validate_pum(String user, String password_encrypt, String finger_encrypt){
         String salt = user_salt.get(user);
         String pwd_md5 = getPassword_encrypt(user);
         String pwd_sha = sha256( pwd_md5 + salt);
-        String mac_md5 = get_mac_encrypt(user);
-        String mac_sha = sha256( mac_md5+ salt );
+        List<String> fingers = get_fingers(user);
 
-        pl( "VALIDATE input :u="+user+",p=" + password_encrypt + ",m=" + mac_encrypt);
+        //POSSIABLE fingers
+        List<String> fingers_sha256 = new ArrayList<String>();
+        for( String finger : fingers ){
+            fingers_sha256.add( sha256( md5(finger) + salt ));
+        }
+
+        pl( "VALIDATE input :u="+user+",p=" + password_encrypt + ",m=" + finger_encrypt);
         pl( "VALIDATE inner: salt=" + salt );
         pl( "pwd_md5=" + pwd_md5 + ",pwd_sha=" + pwd_sha);
-        pl( "mac_md5=" + mac_md5 + ",mac_sha=" + mac_sha);
+        for( String fs : fingers_sha256 ){
+            pl( "finger=" + fs);
+        }
 
         if( password_encrypt.equals(pwd_sha)){
-            if( mac_encrypt.equals(mac_sha)){
+            if( fingers_sha256.contains(finger_encrypt)){
                 user_salt.remove(user);
                 return  " login success ;)";
             }else{
@@ -61,16 +67,37 @@ public class JMock {
     }
 
     ///////////////////////vars
-    public static Map<String,String> user_salt = new ConcurrentHashMap<String, String>();
+    public static Map<String,String> user_salt = new ConcurrentHashMap<String, String>();//动态salt，注意定期修改
 
     //////////////////////inner methods
-    public static String getPassword_encrypt(String user ){
+    public static String getPassword_encrypt( String user ){
         //TODO 应该从数据库读取
-        return "c4ca4238a0b923820dcc509a6f75849b"; //此处默认密码 1。
+        HashMap<String,String> user_pwd = new HashMap<String, String>();
+
+        //todo 模拟密码。
+        user_pwd.put("1",md5("123"));
+
+        if( user_pwd.keySet().contains(user)){
+            return user_pwd.get(user); //此处默认密码 1。
+        }
+
+        return "-1??";
     }
-    public static String get_mac_encrypt(String user ){
+    public static List<String> get_fingers(String user ){
         //TODO 应该从数据库读取
-        return md5("9801a7a826f5");//此处默认了一个mac地址。
+        HashMap<String,List<String>> user_m = new HashMap<String, List<String>>();
+
+        //TODO 模拟特征码。 想让客户端验证通过，此处要添加机器特征码
+        List<String> user1 = new ArrayList<String>();
+        user1.add("467acc037c33510f30561e4b8bafa8b790e97b6a6de8ad86f8443b83dae1e4c6");
+        user1.add("9adfb6b491d8b33f052973e282f07d46c27af4c834f858df109608d3b32fe8ae");
+        user_m.put("1",user1);
+
+        if( user_m.keySet().contains(user)){
+            return user_m.get(user);
+        }
+
+        return new ArrayList<String>();
     }
 
     ///encrypt alog
@@ -107,6 +134,5 @@ public class JMock {
             results[index++]=hexDigits[b & 0xf];
         }
         return new String(results);
-
     }
 }

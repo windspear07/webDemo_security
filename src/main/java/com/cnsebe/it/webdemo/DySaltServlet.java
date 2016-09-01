@@ -8,7 +8,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
- * Created by wind on 16/8/8.
+ * Created by wind on 16/8/18.
+ * 根据参数u返回动态salt值。动态salt的有效期不要超过5min。
  */
 @WebServlet(name="saltServlet", urlPatterns="/salt")
 public class DySaltServlet extends HttpServlet {

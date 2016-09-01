@@ -39,7 +39,7 @@ import json
 main_title='安全登录客户端v1.2'
 #服务器接口地址
 url_login = "http://localhost:8080/login"
-get_salt_url = "http://localhost:8080/salt?u=" #"http://localhost/get_salt"
+get_salt_url = "http://localhost:8081/salt?u=" #"http://localhost/get_salt"
 #登录参数名称
 para_user="u" #用户
 para_password="p" #密码
